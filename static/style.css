@@ -373,13 +373,153 @@ tbody tr.fetch-failed { background: #fffbeb; }
 .rules ol { margin: 14px 0 0; padding-left: 22px; color: #475569; }
 .rules li + li { margin-top: 8px; }
 
+.tool-tabs {
+  display: flex;
+  gap: 10px;
+  margin: 22px 0 0;
+}
+
+.tool-tab {
+  padding: 10px 18px;
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  border-radius: 14px 14px 0 0;
+  background: #e8eef8;
+  color: #334155;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.tool-tab:hover { text-decoration: none; background: #dbe4f3; }
+.tool-tab.active {
+  background: #fff;
+  color: var(--blue-dark);
+  box-shadow: var(--shadow);
+}
+
+/* Q&A clarification check */
+.qa-banner {
+  grid-template-columns: minmax(0, 1fr) 300px;
+  color: var(--blue-dark);
+  background: #eef4ff;
+  border-color: #c7d9fb;
+}
+
+.muted-light { color: rgba(30, 58, 138, 0.78); font-size: 13px; margin-bottom: 0; }
+
+.qa-pill {
+  display: inline-flex;
+  align-items: center;
+  margin: 6px 10px 6px 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 14px;
+}
+.pill-answered { color: var(--green); background: #d1fae5; }
+.pill-unanswered { color: #475569; background: #e2e8f0; }
+.pill-pending { color: var(--amber); background: #fef3c7; }
+
+.qa-summary { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+.qa-question-list { display: grid; gap: 18px; }
+
+.qa-question {
+  border: 1px solid var(--line);
+  border-left-width: 5px;
+  border-radius: 16px;
+  padding: 20px 22px;
+  background: #fff;
+}
+.qa-status-answered { border-left-color: var(--green); }
+.qa-status-unanswered { border-left-color: #94a3b8; }
+.qa-status-pending { border-left-color: var(--amber); }
+
+.qa-question-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.qa-no { font-size: 17px; font-weight: 800; margin-right: 10px; }
+
+.qa-status-badge {
+  display: inline-flex;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+.badge-qa-answered { color: var(--green); background: var(--green-bg); }
+.badge-qa-unanswered { color: #475569; background: #f1f5f9; }
+.badge-qa-pending { color: var(--amber); background: var(--amber-bg); }
+
+.qa-source { font-size: 13px; font-weight: 700; }
+
+.qa-block {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--slate-bg);
+}
+.qa-block-missing { border-style: dashed; }
+.qa-block-title {
+  margin-bottom: 8px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .03em;
+}
+.qa-content { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.qa-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  align-items: center;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.qa-chain { margin: 0; padding-left: 20px; display: grid; gap: 12px; }
+.qa-chain-item {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+.qa-chain-item.is-effective { border-color: #6ee7b7; background: #f0fdf4; }
+.qa-chain-item.is-invalid { opacity: .72; }
+.qa-chain-item.is-failed { border-color: #fcd34d; background: var(--amber-bg); }
+.qa-chain-head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.qa-refs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.qa-ref {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e40af;
+  background: #e0ecff;
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+.qa-reasons { background: #fffbeb; border-color: #fde68a; }
+.qa-reasons ul { margin: 0; padding-left: 20px; color: #92400e; font-size: 14px; }
+.qa-reasons li + li { margin-top: 6px; }
+
 @media (max-width: 920px) {
   .hero-inner,
-  .result-banner { grid-template-columns: 1fr; }
+  .result-banner,
+  .qa-banner { grid-template-columns: 1fr; }
   .hero-card { max-width: 520px; }
   .search-form { grid-template-columns: 1fr; }
   .form-actions { justify-content: flex-start; }
-  .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .summary-grid,
+  .qa-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 560px) {

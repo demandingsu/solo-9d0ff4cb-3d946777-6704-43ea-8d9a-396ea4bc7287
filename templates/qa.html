@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>答疑核对 - 招标辅助核对</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="hero">
+    <div class="container hero-inner">
+      <div>
+        <p class="eyebrow">Clarification Q&amp;A Check</p>
+        <h1>答疑核对</h1>
+        <p class="hero-copy">沿同站分页读取标有问题编号的提问与答复详情并按编号配对；答复引用前序答复作修订时，只以引用链中最新的有效答复为准，辅助标书编写前确认哪些问题已有正式答复。</p>
+      </div>
+      <div class="hero-card" aria-label="核对规则">
+        <strong>核对规则</strong>
+        <span>同站分页全量读取</span>
+        <span>按问题编号配对提问与答复</span>
+        <span>引用链只认最新有效答复</span>
+        <span>断链、冲突、抓取失败仅该问题待核实</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <nav class="tool-tabs" aria-label="核对工具切换">
+      <a class="tool-tab" href="/">截标状态核对</a>
+      <a class="tool-tab active" href="/qa" aria-current="page">答疑核对</a>
+    </nav>
+
+    <section class="panel search-panel" aria-labelledby="search-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">输入查询条件</p>
+          <h2 id="search-title">项目与答疑目录</h2>
+        </div>
+        <a class="sample-site-link" href="http://localhost:8080/index.html" target="_blank" rel="noopener noreferrer">打开本地样本站点</a>
+      </div>
+
+      <form method="post" class="search-form">
+        <label>
+          <span>项目编号</span>
+          <input name="project_no" value="{{ project_no }}" placeholder="例如：GSB-2026-001" required autocomplete="off">
+        </label>
+        <label class="wide">
+          <span>答疑目录网址</span>
+          <input name="catalog_url" type="url" value="{{ catalog_url }}" placeholder="http://localhost:8080/qa/page-1.html" required autocomplete="off">
+        </label>
+        <div class="form-actions">
+          <button type="submit">开始核对</button>
+          <a href="/qa" class="secondary-action">恢复示例</a>
+        </div>
+      </form>
+
+      <div class="sample-projects" aria-label="样本项目">
+        <span>样本项目：</span>
+        <code>GSB-2026-001</code><em>修订链+作废</em>
+        <code>GSB-2026-002</code><em>同时刻冲突</em>
+        <code>GSB-2026-003</code><em>断链</em>
+        <code>GSB-2026-004</code><em>抓取失败</em>
+        <code>GSB-2026-005</code><em>尚未答复</em>
+      </div>
+    </section>
+
+    {% if error %}
+    <section class="alert error" role="alert">
+      <strong>无法完成核对</strong>
+      <p>{{ error }}</p>
+    </section>
+    {% endif %}
+
+    {% if result %}
+    <section class="result-banner qa-banner" aria-live="polite">
+      <div class="result-main">
+        <p class="eyebrow">核对摘要</p>
+        <h2>{{ result.question_count }} 个问题</h2>
+        <p>
+          <span class="qa-pill pill-answered">已有正式答复 {{ result.answered_count }}</span>
+          <span class="qa-pill pill-unanswered">尚未答复 {{ result.unanswered_count }}</span>
+          <span class="qa-pill pill-pending">待核实 {{ result.pending_count }}</span>
+        </p>
+        {% if not result.pagination_complete %}
+        <p class="muted-light">分页未完整读取：已保留全部已采集内容，缺少答复的问题不会被判为“尚未答复”。</p>
+        {% endif %}
+      </div>
+      <div class="deadline-card">
+        <span>项目编号</span>
+        <strong>{{ result.project_no }}</strong>
+        <small>核对时间 {{ result.checked_at|dt }}（北京时间）</small>
+      </div>
+    </section>
+
+    <section class="summary-grid qa-summary" aria-label="核对摘要">
+      <div><span>目录分页</span><strong>{{ result.pages|length }} 页{% if result.page_failures %}（{{ result.page_failures|length }} 页失败）{% endif %}</strong></div>
+      <div><span>详情页</span><strong>{{ result.detail_count }} 个</strong></div>
+      <div><span>重复合并</span><strong>{{ result.duplicates_skipped }} 条</strong></div>
+      <div><span>未标号详情</span><strong>{{ result.unnumbered_entries|length }} 个</strong></div>
+      <div><span>分页完整性</span><strong>{% if result.pagination_complete %}完整{% else %}不完整{% endif %}</strong></div>
+    </section>
+
+    {% if result.issues %}
+    <section class="alert warning" role="alert">
+      <strong>需要人工核实的全局问题</strong>
+      <ul>
+        {% for issue in result.issues %}
+        <li>{{ issue }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    {% if result.notes %}
+    <section class="notes">
+      {% for note in result.notes %}<span>{{ note }}</span>{% endfor %}
+    </section>
+    {% endif %}
+
+    <section class="panel timeline-panel" aria-labelledby="qa-list-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">结论依据</p>
+          <h2 id="qa-list-title">按问题编号的答复状态</h2>
+        </div>
+        <a href="{{ result.catalog_url }}" target="_blank" rel="noopener noreferrer">打开原始答疑目录</a>
+      </div>
+
+      {% if result.questions %}
+      <div class="qa-question-list">
+        {% for question in result.questions %}
+        <article class="qa-question qa-status-{{ question.status }}">
+          <header class="qa-question-head">
+            <div>
+              <span class="qa-no">问题 {{ question.question_no }}</span>
+              <span class="qa-status-badge badge-qa-{{ question.status }}">{{ question.status_label }}</span>
+            </div>
+            {% if question.question_entry %}
+            <a class="qa-source" href="{{ question.question_entry.url }}" target="_blank" rel="noopener noreferrer">提问来源</a>
+            {% endif %}
+          </header>
+
+          {% if question.question_entry %}
+          <div class="qa-block">
+            <div class="qa-block-title">提问内容</div>
+            <p class="qa-content">{{ question.question_entry.content_text or question.question_entry.title }}</p>
+            <div class="qa-meta">
+              <span>{{ question.question_entry.publish_time|dt }}</span>
+              {% if question.question_entry.found_on %}<a href="{{ question.question_entry.found_on }}" target="_blank" rel="noopener noreferrer">发现目录页</a>{% endif %}
+              {% if question.question_entry.source_note %}<span class="muted">{{ question.question_entry.source_note }}</span>{% endif %}
+              {% if not question.question_entry.fetch_ok %}<span class="error-text">{{ question.question_entry.error }}</span>{% endif %}
+            </div>
+          </div>
+          {% else %}
+          <div class="qa-block qa-block-missing">
+            <div class="qa-block-title">提问内容</div>
+            <p class="muted">未采集到该编号的提问详情。</p>
+          </div>
+          {% endif %}
+
+          <div class="qa-block">
+            <div class="qa-block-title">
+              答复与引用链（{{ question.answers|length }} 条）
+              {% if question.effective_answer %}<span class="muted">— 最新有效答复见下方标记</span>{% endif %}
+            </div>
+            {% if question.answers %}
+            <ol class="qa-chain">
+              {% for answer in question.answers %}
+              <li class="qa-chain-item {% if answer == question.effective_answer %}is-effective{% endif %} {% if answer.is_invalid %}is-invalid{% endif %} {% if not answer.fetch_ok %}is-failed{% endif %}">
+                <div class="qa-chain-head">
+                  <strong>{{ answer.title }}</strong>
+                  {% if answer == question.effective_answer %}<span class="role deadline-role">当前有效答复</span>{% endif %}
+                  {% if answer.is_invalid %}<span class="role ignored-role">已作废/撤销</span>{% endif %}
+                  {% if not answer.fetch_ok %}<span class="role pending-role">详情抓取失败</span>{% endif %}
+                </div>
+                {% if answer.fetch_ok %}
+                <p class="qa-content">{{ answer.content_text }}</p>
+                {% endif %}
+                {% if answer.invalid_reason %}<p class="muted">作废依据：{{ answer.invalid_reason }}</p>{% endif %}
+                {% if answer.references %}
+                <div class="qa-refs">
+                  {% for ref in answer.references %}
+                  <span class="qa-ref">
+                    引用前序答复：
+                    {% if ref.url %}<a href="{{ ref.url }}" target="_blank" rel="noopener noreferrer">{{ ref.label }}</a>{% else %}{{ ref.label }}{% endif %}
+                  </span>
+                  {% endfor %}
+                </div>
+                {% endif %}
+                <div class="qa-meta">
+                  <span>{{ answer.publish_time|dt }}</span>
+                  <a href="{{ answer.url }}" target="_blank" rel="noopener noreferrer">答复来源</a>
+                  {% if answer.found_on %}<a href="{{ answer.found_on }}" target="_blank" rel="noopener noreferrer">发现目录页</a>{% endif %}
+                  {% if answer.error %}<span class="error-text">{{ answer.error }}</span>{% endif %}
+                </div>
+              </li>
+              {% endfor %}
+            </ol>
+            {% else %}
+            <p class="muted">未采集到该编号的答复详情。</p>
+            {% endif %}
+          </div>
+
+          {% if question.reasons %}
+          <div class="qa-block qa-reasons">
+            <div class="qa-block-title">状态说明</div>
+            <ul>
+              {% for reason in question.reasons %}<li>{{ reason }}</li>{% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">未找到可按问题编号配对的答疑详情。</div>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    <section class="rules panel" aria-labelledby="rules-title">
+      <p class="eyebrow">判定说明</p>
+      <h2 id="rules-title">系统如何得出答复状态</h2>
+      <ol>
+        <li>从输入的答疑目录出发，仅跟踪同站分页链接，读取标有问题编号的提问与答复详情，并按归一化后的问题编号配对。</li>
+        <li>答复可通过同站链接或修订文字引用前一条答复；系统沿引用链确定先后，只以链上最新的<strong>有效</strong>答复为准，声明作废、撤销或无效的答复不计入。</li>
+        <li>引用断链或循环、同一发布时间且未声明修订关系的答复冲突、已标号详情抓取失败时，仅将该问题标记为“待核实”，不影响其他问题。</li>
+        <li>分页抓取失败时保留已采集内容；在分页未读全的情况下，缺少答复的问题不会被判为“尚未答复”，而是“待核实”。</li>
+        <li>“尚未答复”表示全部分页读取完成且确实没有有效答复，编标前应就该类问题向采购人或代理机构书面求证。</li>
+      </ol>
+    </section>
+  </main>
+</body>
+</html>

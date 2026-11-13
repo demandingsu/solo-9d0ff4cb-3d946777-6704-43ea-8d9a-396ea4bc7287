@@ -6,6 +6,7 @@ import os
 from flask import Flask, render_template, request
 
 from tendercheck.parsing import BEIJING_TZ, format_datetime
+from tendercheck.qa_scraper import QaScraper
 from tendercheck.scraper import InputError, ListFetchError, TenderScraper
 
 logging.basicConfig(
@@ -21,6 +22,10 @@ DEFAULT_PROJECT_NO = os.getenv("DEMO_PROJECT_NO", "GSB-2026-001")
 DEFAULT_LIST_URL = os.getenv(
     "DEMO_LIST_URL",
     "http://localhost:8080/notices/page-1.html",
+)
+DEFAULT_QA_CATALOG_URL = os.getenv(
+    "DEMO_QA_CATALOG_URL",
+    "http://localhost:8080/qa/page-1.html",
 )
 
 
@@ -73,6 +78,39 @@ def index():
         result=result,
         error=error,
         beijing_tz=BEIJING_TZ,
+    )
+
+
+@app.route("/qa", methods=["GET", "POST"])
+def qa_check():
+    project_no = DEFAULT_PROJECT_NO
+    catalog_url = DEFAULT_QA_CATALOG_URL
+    result = None
+    error = None
+
+    if request.method == "POST":
+        project_no = request.form.get("project_no", "").strip()
+        catalog_url = request.form.get("catalog_url", "").strip()
+        try:
+            scraper = QaScraper(
+                project_no=project_no,
+                catalog_url=catalog_url,
+                max_pages=_int_env("MAX_QA_LIST_PAGES", 10),
+                max_details=_int_env("MAX_QA_DETAIL_PAGES", 60),
+            )
+            result = scraper.run()
+        except (InputError, ListFetchError) as exc:
+            error = str(exc)
+        except Exception:
+            logger.exception("qa check failed")
+            error = "答疑核对过程中发生未预期错误，请检查网址后重试。"
+
+    return render_template(
+        "qa.html",
+        project_no=project_no,
+        catalog_url=catalog_url,
+        result=result,
+        error=error,
     )
 
 
